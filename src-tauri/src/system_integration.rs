@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::Result;
 use log::{info, error};
 use serde::{Deserialize, Serialize};
 
@@ -34,8 +34,7 @@ pub fn init() -> Result<()> {
     Ok(())
 }
 
-#[tauri::command]
-pub async fn get_active_window_info() -> Result<WindowInfo, String> {
+pub fn get_active_window_info() -> Result<WindowInfo, String> {
     get_active_window_info_internal()
         .map_err(|e| {
             error!("Failed to get active window info: {}", e);

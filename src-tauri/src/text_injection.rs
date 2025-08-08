@@ -1,9 +1,8 @@
-use anyhow::{Result, Context};
+use anyhow::Result;
 use log::{info, error};
-use enigo::{Enigo, KeyboardControllable};
+use enigo::{Enigo, Key, Keyboard, Settings};
 
-#[tauri::command]
-pub async fn inject_text(text: String) -> Result<(), String> {
+pub fn inject_text(text: String) -> Result<(), String> {
     inject_text_internal(&text)
         .map_err(|e| {
             error!("Failed to inject text: {}", e);
@@ -11,27 +10,26 @@ pub async fn inject_text(text: String) -> Result<(), String> {
         })
 }
 
-fn inject_text_internal(text: &str) -> Result<()> {
+pub fn inject_text_internal(text: &str) -> Result<()> {
     info!("Injecting text: {}", text);
     
-    let mut enigo = Enigo::new();
+    let mut enigo = match Enigo::new(&Settings::default()) {
+        Ok(e) => e,
+        Err(e) => return Err(anyhow::anyhow!("Text injection not available: {}", e)),
+    };
     
-    // Simulate typing the text
-    for c in text.chars() {
-        match c {
-            '\n' => {
-                enigo.key_click(enigo::Key::Return);
-            }
-            '\t' => {
-                enigo.key_click(enigo::Key::Tab);
-            }
-            _ => {
-                enigo.key_sequence_char(c);
-            }
-        }
-        
-        // Small delay to make it more realistic
-        std::thread::sleep(std::time::Duration::from_millis(10));
+    // Add one line break before the injected text as specified
+    if let Err(e) = enigo.key(Key::Return, enigo::Direction::Press) {
+        return Err(anyhow::anyhow!("Key press failed: {}", e));
+    }
+    if let Err(e) = enigo.key(Key::Return, enigo::Direction::Release) {
+        return Err(anyhow::anyhow!("Key release failed: {}", e));
+    }
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    
+    // Type the text
+    if let Err(e) = enigo.text(text) {
+        return Err(anyhow::anyhow!("Text input failed: {}", e));
     }
     
     info!("Text injection completed");
@@ -40,15 +38,7 @@ fn inject_text_internal(text: &str) -> Result<()> {
 
 pub fn inject_text_with_hotkey(text: &str) -> Result<()> {
     info!("Injecting text via hotkey: {}", text);
-    
-    let mut enigo = Enigo::new();
-    
-    // For hotkey-triggered injection, we might want to use a different approach
-    // that's more immediate and doesn't simulate typing
-    enigo.key_sequence(text);
-    
-    info!("Hotkey text injection completed");
-    Ok(())
+    inject_text_internal(text)
 }
 
 pub fn inject_text_clipboard(text: &str) -> Result<()> {

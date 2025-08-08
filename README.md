@@ -1,36 +1,39 @@
-# EnhanceKeys
+# EnhanceKeys - Prompt Enhancement Desktop Application
 
-A Tauri-based desktop application that provides preloaded text snippets that can be injected into AI chat windows via customizable keyboard shortcuts.
+A native desktop application that provides quick access to predefined prompt enhancement text snippets through a 3x3 grid interface with global hotkeys.
 
 ## Overview
 
-EnhanceKeys allows users to create, manage, and quickly insert predefined text snippets into AI chat interfaces through configurable hotkeys. This tool enhances productivity when working with AI assistants by providing instant access to commonly used prompts, templates, and responses.
+EnhanceKeys is designed to seamlessly append standardized helpful prompt additions to any text input field across your system, improving prompt effectiveness without breaking workflow. The application uses a fixed set of 9 prompt enhancement snippets activated via Alt+Shift+1-9 hotkeys.
 
 ## Features
 
-- **Text Snippet Management**: Create, edit, and organize text snippets
-- **Keyboard Shortcuts**: Assign custom hotkeys to your most-used snippets
-- **System Integration**: Seamlessly inject text into active chat windows
-- **Cross-Platform**: Works on Windows, macOS, and Linux
-- **Modern UI**: Clean, responsive interface built with React and Tailwind CSS
+### Core Functionality
+- **3x3 Grid Interface**: Fixed layout with 9 predefined prompt enhancement buttons
+- **Global Hotkeys**: Alt+Shift+1-9 system-wide shortcuts for instant text injection  
+- **Text Injection**: Automatically adds line break before injecting enhancement text
+- **Always-on-Top Window**: Positioned in top-right corner with semi-transparent overlay
+- **Cross-Platform**: Native desktop app for Windows, macOS, and Linux
+
+### Predefined Snippets
+1. **Ask Questions**: Prompts for clarifying questions until 95% context certainty
+2. **Need Review**: Escalation pattern with "I don't know ===" exit keywords  
+3. **More Context**: Requests for additional context and requirements clarification
+4. **Step by Step**: Requests numbered, actionable steps with reasoning
+5. **Examples**: Requests concrete examples, code snippets, and demonstrations
+6. **Validation**: Requests validation steps and success criteria
+7. **Error Handling**: Requests error handling strategies and edge case coverage
+8. **Documentation**: Requests documentation-formatted responses with clear structure
+9. **Testing**: Requests testing suggestions for both positive and edge cases
 
 ## Tech Stack
 
-### Backend
-- **Rust**: Core application logic and system integration
-- **Tauri**: Cross-platform desktop app framework
-
-### Frontend
-- **React**: User interface components
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Modern, utility-first styling
-
-### Configuration
-- **TOML**: Human-readable configuration files
-- **JSON**: Data storage and API responses
-
-### Future Enhancements
-- **Supabase**: Cloud database for snippet synchronization (planned for future versions)
+- **Rust Backend**: System integration, hotkey management, text injection
+- **React + TypeScript Frontend**: 3x3 grid UI with Tailwind CSS styling  
+- **Tauri Framework**: Cross-platform desktop app with web frontend
+- **TOML Configuration**: Human-readable config files for snippets
+- **Global Hotkey Library**: System-wide Alt+Shift+1-9 shortcuts
+- **Enigo**: Cross-platform input simulation for text injection
 
 ## Project Structure
 
@@ -111,13 +114,27 @@ The React frontend provides:
 
 ## Configuration
 
-Snippets are stored in TOML format for easy editing:
+The application uses a TOML configuration file with predefined snippets:
 
+### config/default_snippets.toml
 ```toml
+[hotkeys]
+button_1 = "Alt+Shift+1"
+button_2 = "Alt+Shift+2"
+# ... through button_9
+
 [snippets]
-"greeting" = "Hello! How can I help you today?"
-"code_review" = "Please review this code and provide feedback on..."
-"bug_report" = "I'm experiencing an issue with..."
+button_1_title = "Ask Questions"
+button_1_text = "Ask the user questions in relation to supplementing the context you are given in the prompt..."
+button_1_description = "Prompts for clarifying questions"
+
+# ... 8 more predefined enhancement snippets
+
+[ui]
+always_on_top = true
+transparency = 0.9
+position_x = "top-right"
+auto_start = false
 ```
 
 ## Contributing
@@ -132,12 +149,30 @@ Snippets are stored in TOML format for easy editing:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Roadmap
+## Implementation Status
 
-- [ ] MVP with basic snippet management
-- [ ] Custom keyboard shortcuts
-- [ ] Text injection into popular AI chat interfaces
-- [ ] Snippet categories and tags
+### ✅ Completed (MVP)
+- [x] Project structure and Tauri setup with React/Tailwind
+- [x] 3x3 grid UI layout with predefined buttons
+- [x] Window positioning (top-right) and always-on-top behavior  
+- [x] Semi-transparent overlay styling
+- [x] Configuration system with TOML file parsing
+- [x] Load predefined text snippets from config into buttons
+- [x] Global hotkey system (Alt+Shift+1-9)
+- [x] Text injection mechanism for focused input fields
+
+### 🔄 In Progress
+- [ ] System tray integration
+- [ ] Cross-platform testing and refinements
+
+### 📋 Future Enhancements (Post-MVP)
+- [ ] Custom snippet creation UI
+- [ ] Snippet categories and organization
 - [ ] Cloud synchronization with Supabase
+- [ ] Usage analytics and optimization
 - [ ] Plugin system for custom integrations
-- [ ] Mobile companion app
+
+## Known Issues
+- Currently encountering JavaScriptCore dependency issues during build on Linux
+- Requires system dependencies: pkg-config, libssl-dev, libgtk-3-dev, libwebkit2gtk-4.1-dev
+- Global hotkey registration may conflict with other applications

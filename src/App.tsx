@@ -1,38 +1,46 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ButtonGrid from './components/ButtonGrid'
-import SettingsPanel from './components/SettingsPanel'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 
 interface Snippet {
   id: string
-  name: string
+  title: string
   text: string
-  hotkey?: string
+  description: string
+  hotkey: string
+}
+
+interface Config {
+  snippets: Snippet[]
+  settings: {
+    auto_start: boolean
+    minimize_to_tray: boolean
+    global_hotkeys: boolean
+  }
+  ui_settings: {
+    always_on_top: boolean
+    transparency: number
+    position_x: string
+    auto_start: boolean
+  }
 }
 
 function App() {
-  const [snippets, setSnippets] = useState<Snippet[]>([
-    {
-      id: '1',
-      name: 'Greeting',
-      text: 'Hello! How can I help you today?',
-      hotkey: 'Ctrl+Shift+G'
-    },
-    {
-      id: '2',
-      name: 'Code Review',
-      text: 'Please review this code and provide feedback on improvements, best practices, and potential issues.',
-      hotkey: 'Ctrl+Shift+R'
-    },
-    {
-      id: '3',
-      name: 'Bug Report',
-      text: 'I\'m experiencing an issue with the following behavior: [describe the problem]. Expected behavior: [describe what should happen].',
-      hotkey: 'Ctrl+Shift+B'
-    }
-  ])
-
+  const [config, setConfig] = useState<Config | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+
+  useEffect(() => {
+    loadConfiguration()
+  }, [])
+
+  const loadConfiguration = async () => {
+    try {
+      const loadedConfig = await invoke<Config>('load_config')
+      setConfig(loadedConfig)
+    } catch (error) {
+      console.error('Failed to load configuration:', error)
+    }
+  }
 
   const handleSnippetClick = async (snippet: Snippet) => {
     try {
@@ -42,51 +50,52 @@ function App() {
     }
   }
 
-  const handleAddSnippet = (newSnippet: Omit<Snippet, 'id'>) => {
-    const snippet: Snippet = {
-      ...newSnippet,
-      id: Date.now().toString()
-    }
-    setSnippets([...snippets, snippet])
-  }
-
-  const handleDeleteSnippet = (id: string) => {
-    setSnippets(snippets.filter(s => s.id !== id))
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading EnhanceKeys...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">EnhanceKeys</h1>
-            <p className="text-gray-600 mt-2">Quick text snippets for AI chat windows</p>
+    <div 
+      className="fixed inset-0 pointer-events-none"
+      style={{ 
+        background: `rgba(255, 255, 255, ${config.ui_settings.transparency})`,
+        backdropFilter: 'blur(8px)'
+      }}
+    >
+      <div className="absolute top-4 right-4 pointer-events-auto">
+        <div className="bg-white/80 backdrop-blur-md rounded-lg shadow-lg border border-gray-200">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h1 className="text-lg font-bold text-gray-900">EnhanceKeys</h1>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                ⚙️
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            {showSettings ? 'Hide Settings' : 'Settings'}
-          </button>
-        </div>
+          
+          {showSettings && (
+            <div className="p-4 border-b border-gray-200">
+              <p className="text-xs text-gray-600 mb-2">Settings panel (placeholder)</p>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Close Settings
+              </button>
+            </div>
+          )}
 
-        {/* Settings Panel */}
-        {showSettings && (
-          <SettingsPanel
-            snippets={snippets}
-            onAddSnippet={handleAddSnippet}
-            onDeleteSnippet={handleDeleteSnippet}
-            onClose={() => setShowSettings(false)}
-          />
-        )}
-
-        {/* Main Content */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Snippets</h2>
-            <ButtonGrid snippets={snippets} onSnippetClick={handleSnippetClick} />
-          </div>
+          <ButtonGrid snippets={config.snippets} onSnippetClick={handleSnippetClick} />
         </div>
       </div>
     </div>

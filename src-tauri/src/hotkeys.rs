@@ -1,127 +1,93 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use anyhow::{Result, Context};
+use anyhow::Result;
 use log::{info, error};
-use tauri::Manager;
-use rdev::{listen, Event, EventType, Key};
+use global_hotkey::{GlobalHotKeyManager, hotkey::{HotKey, Modifiers, Code}, GlobalHotKeyEvent};
+use std::sync::{LazyLock, Mutex};
+use std::collections::HashMap;
+use crate::text_injection::inject_text_internal;
 
-type HotkeyMap = Arc<Mutex<HashMap<String, String>>>;
-
-static mut HOTKEYS: Option<HotkeyMap> = None;
-static mut LISTENING: bool = false;
+static HOTKEY_MANAGER: LazyLock<Mutex<Option<GlobalHotKeyManager>>> = LazyLock::new(|| Mutex::new(None));
+static REGISTERED_HOTKEYS: LazyLock<Mutex<HashMap<String, HotKey>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn init_hotkeys() -> Result<()> {
-    unsafe {
-        HOTKEYS = Some(Arc::new(Mutex::new(HashMap::new())));
-        start_listening()?;
-    }
-    Ok(())
-}
-
-unsafe fn start_listening() -> Result<()> {
-    if LISTENING {
-        return Ok(());
+    info!("Initializing global hotkey system");
+    
+    let manager = GlobalHotKeyManager::new()?;
+    
+    // Register default Alt+Shift+1-9 hotkeys
+    let hotkeys = [
+        ("1", Code::Digit1),
+        ("2", Code::Digit2),
+        ("3", Code::Digit3),
+        ("4", Code::Digit4),
+        ("5", Code::Digit5),
+        ("6", Code::Digit6),
+        ("7", Code::Digit7),
+        ("8", Code::Digit8),
+        ("9", Code::Digit9),
+    ];
+    
+    let mut registered = REGISTERED_HOTKEYS.lock().unwrap();
+    
+    for (key, code) in hotkeys {
+        let hotkey = HotKey::new(Some(Modifiers::ALT | Modifiers::SHIFT), code);
+        manager.register(hotkey)?;
+        registered.insert(key.to_string(), hotkey);
+        info!("Registered hotkey Alt+Shift+{} for snippet", key);
     }
     
-    let hotkeys = HOTKEYS.as_ref().unwrap().clone();
+    *HOTKEY_MANAGER.lock().unwrap() = Some(manager);
     
+    // Start hotkey event listener in background thread
     std::thread::spawn(move || {
-        if let Err(e) = listen(move |event| {
-            if let EventType::KeyPress(key) = event.event_type {
-                handle_key_press(key, &hotkeys);
+        let receiver = GlobalHotKeyEvent::receiver();
+        loop {
+            if let Ok(event) = receiver.try_recv() {
+                if let Some(key) = find_key_for_hotkey(event.id()) {
+                    handle_hotkey_event(&key);
+                }
             }
-        }) {
-            error!("Failed to start hotkey listener: {}", e);
+            std::thread::sleep(std::time::Duration::from_millis(10));
         }
     });
     
-    LISTENING = true;
-    info!("Hotkey listener started");
+    info!("Global hotkey system initialized successfully");
     Ok(())
 }
 
-fn handle_key_press(key: Key, hotkeys: &HotkeyMap) {
-    // This is a simplified implementation
-    // In a real implementation, you would track modifier keys (Ctrl, Shift, etc.)
-    // and match against the registered hotkeys
-    
-    let key_str = match key {
-        Key::KeyG => "G",
-        Key::KeyR => "R",
-        Key::KeyB => "B",
-        Key::KeyF => "F",
-        Key::KeyT => "T",
-        Key::KeyC => "C",
-        Key::KeyE => "E",
-        Key::KeyO => "O",
-        Key::KeyS => "S",
-        Key::KeyD => "D",
-        _ => return,
-    };
-    
-    if let Ok(hotkeys_map) = hotkeys.lock() {
-        for (snippet_id, hotkey) in hotkeys_map.iter() {
-            if hotkey.contains(key_str) {
-                info!("Hotkey triggered for snippet: {}", snippet_id);
-                // Here you would trigger the text injection
-                // This would typically involve sending a message to the main thread
-                break;
-            }
+fn find_key_for_hotkey(hotkey_id: u32) -> Option<String> {
+    let registered = REGISTERED_HOTKEYS.lock().unwrap();
+    for (key, hotkey) in registered.iter() {
+        if hotkey.id() == hotkey_id {
+            return Some(key.clone());
+        }
+    }
+    None
+}
+
+fn handle_hotkey_event(key: &str) {
+    println!("🔥 Hotkey Alt+Shift+{} triggered!", key);
+    if let Some(text) = get_snippet_text(key) {
+        println!("📝 Injecting: {}...", &text[..60.min(text.len())]);
+        if let Err(e) = inject_text_internal(text) {
+            println!("⚠️  Text injection failed: {}", e);
+            println!("💡 This is expected in WSL - would work in native environment");
+        } else {
+            println!("✅ Text injected successfully!");
         }
     }
 }
 
-#[tauri::command]
-pub async fn register_hotkey(snippet_id: String, hotkey: String) -> Result<(), String> {
-    unsafe {
-        if let Some(hotkeys) = &HOTKEYS {
-            if let Ok(mut map) = hotkeys.lock() {
-                map.insert(snippet_id, hotkey);
-                info!("Registered hotkey: {} -> {}", snippet_id, hotkey);
-                return Ok(());
-            }
-        }
+pub fn get_snippet_text(key: &str) -> Option<&'static str> {
+    match key {
+        "1" => Some("Ask the user questions in relation to supplementing the context you are given in the prompt. Ask the user questions until you are 95% sure you have the proper context in order to understand the problem and provide an accurate implementation/demo/mvp."),
+        "2" => Some("If there is a situation where you encounter a problem you do not know how to fix/implement, please use the exit keywords \"I don't know === <description of problem you are unable to solve>\""),
+        "3" => Some("Before providing a solution, ask me to clarify any ambiguous requirements or provide additional context that would help you give a more accurate and useful response."),
+        "4" => Some("Break down your response into clear, actionable steps. Number each step and explain the reasoning behind important decisions."),
+        "5" => Some("Provide concrete examples in your response. Show don't just tell - include code snippets, sample data, or real-world scenarios that demonstrate your points."),
+        "6" => Some("Include validation steps or criteria I can use to verify that your solution works correctly and meets the requirements."),
+        "7" => Some("Address potential error cases and edge conditions. Include error handling strategies and common failure points to watch for."),
+        "8" => Some("Structure your response as if it were documentation - include clear headings, prerequisites, and any assumptions you're making."),
+        "9" => Some("Include suggestions for how to test the solution you're providing. Mention both positive test cases and edge cases to verify."),
+        _ => None,
     }
-    Err("Failed to register hotkey".to_string())
 }
-
-#[tauri::command]
-pub async fn unregister_hotkey(snippet_id: String) -> Result<(), String> {
-    unsafe {
-        if let Some(hotkeys) = &HOTKEYS {
-            if let Ok(mut map) = hotkeys.lock() {
-                map.remove(&snippet_id);
-                info!("Unregistered hotkey for snippet: {}", snippet_id);
-                return Ok(());
-            }
-        }
-    }
-    Err("Failed to unregister hotkey".to_string())
-}
-
-pub fn parse_hotkey(hotkey: &str) -> Result<Vec<Key>> {
-    let mut keys = Vec::new();
-    let parts: Vec<&str> = hotkey.split('+').collect();
-    
-    for part in parts {
-        let key = match part.trim().to_uppercase().as_str() {
-            "CTRL" => Key::ControlLeft,
-            "SHIFT" => Key::ShiftLeft,
-            "ALT" => Key::AltLeft,
-            "G" => Key::KeyG,
-            "R" => Key::KeyR,
-            "B" => Key::KeyB,
-            "F" => Key::KeyF,
-            "T" => Key::KeyT,
-            "C" => Key::KeyC,
-            "E" => Key::KeyE,
-            "O" => Key::KeyO,
-            "S" => Key::KeyS,
-            "D" => Key::KeyD,
-            _ => return Err(anyhow::anyhow!("Unknown key: {}", part)),
-        };
-        keys.push(key);
-    }
-    
-    Ok(keys)
-} 

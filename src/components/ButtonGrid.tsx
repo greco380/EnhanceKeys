@@ -1,11 +1,11 @@
 import React from 'react'
-import Button from './Button'
 
 interface Snippet {
   id: string
-  name: string
+  title: string
   text: string
-  hotkey?: string
+  description: string
+  hotkey: string
 }
 
 interface ButtonGridProps {
@@ -14,52 +14,43 @@ interface ButtonGridProps {
 }
 
 const ButtonGrid: React.FC<ButtonGridProps> = ({ snippets, onSnippetClick }) => {
-  if (snippets.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-gray-500 text-lg mb-4">No snippets yet</div>
-        <p className="text-gray-400">Create your first snippet in the settings panel</p>
-      </div>
-    )
-  }
+  // Ensure we have exactly 9 snippets for the 3x3 grid
+  const gridSnippets = Array.from({ length: 9 }, (_, index) => {
+    return snippets.find(s => s.id === `button_${index + 1}`) || {
+      id: `button_${index + 1}`,
+      title: `Button ${index + 1}`,
+      text: '',
+      description: 'No snippet loaded',
+      hotkey: `Alt+Shift+${index + 1}`
+    }
+  })
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {snippets.map((snippet) => (
-        <div
+    <div className="grid grid-cols-3 gap-4 p-4">
+      {gridSnippets.map((snippet) => (
+        <button
           key={snippet.id}
-          className="card p-4 hover:shadow-md transition-shadow cursor-pointer group"
+          className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg p-4 
+                     hover:bg-white hover:shadow-lg transition-all duration-200 
+                     min-h-[120px] flex flex-col justify-between
+                     focus:outline-none focus:ring-2 focus:ring-blue-500"
           onClick={() => onSnippetClick(snippet)}
+          title={`${snippet.title} - ${snippet.hotkey}`}
         >
-          <div className="flex justify-between items-start mb-3">
-            <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-              {snippet.name}
-            </h3>
-            {snippet.hotkey && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                {snippet.hotkey}
-              </span>
-            )}
+          <div className="text-center">
+            <div className="font-semibold text-gray-900 text-sm mb-1">
+              {snippet.title}
+            </div>
+            <div className="text-xs text-gray-600 mb-2">
+              {snippet.description}
+            </div>
           </div>
-          <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-            {snippet.text}
-          </p>
-          <div className="flex justify-between items-center">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onSnippetClick(snippet)
-              }}
-            >
-              Use Snippet
-            </Button>
-            <span className="text-xs text-gray-400">
-              {snippet.text.length} chars
+          <div className="flex justify-center">
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              {snippet.hotkey}
             </span>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   )

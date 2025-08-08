@@ -1,48 +1,56 @@
 {
+  "productName": "EnhanceKeys",
+  "version": "0.0.0",
+  "identifier": "com.enhancekeys.dev",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "EnhanceKeys",
-    "version": "0.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
+  "app": {
+    "windows": [
+      {
+        "title": "EnhanceKeys",
+        "width": 480,
+        "height": 440,
+        "minWidth": 480,
+        "minHeight": 440,
+        "maxWidth": 480,
+        "maxHeight": 440,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "transparent": true,
+        "skipTaskbar": true,
+        "x": -480,
+        "y": 50,
+        "resizable": false,
+        "fullscreen": false
       }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.enhancekeys.dev",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
-    },
+    ],
     "security": {
       "csp": null
     },
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "EnhanceKeys",
-        "width": 800,
-        "height": 600,
-        "minWidth": 600,
-        "minHeight": 400
-      }
-    ]
-  }
-} 
+    "trayIcon": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png", 
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": null
+    }
+  },
+  "plugins": {}
+}

@@ -1,31 +1,56 @@
-# Default snippets for EnhanceKeys
-# This file contains the initial snippets that will be loaded when the app is first run
-
-[snippets]
-greeting = "Hello! How can I help you today?"
-code_review = "Please review this code and provide feedback on improvements, best practices, and potential issues."
-bug_report = "I'm experiencing an issue with the following behavior: [describe the problem]. Expected behavior: [describe what should happen]."
-feature_request = "I would like to request a new feature: [describe the feature]. This would help with: [explain the benefit]."
-thank_you = "Thank you for your help! I appreciate your assistance."
-clarification = "Could you please clarify what you mean by [specific term/concept]?"
-example_request = "Could you provide an example of how to implement [specific functionality]?"
-optimization = "How can I optimize this code for better performance?"
-security_check = "Please review this code for potential security vulnerabilities."
-documentation = "Could you help me write documentation for this code?"
+# Default snippets for EnhanceKeys - Prompt Enhancement Edition
+# This file contains the 9 predefined prompt enhancement snippets as per specification
 
 [hotkeys]
-greeting = "Ctrl+Shift+G"
-code_review = "Ctrl+Shift+R"
-bug_report = "Ctrl+Shift+B"
-feature_request = "Ctrl+Shift+F"
-thank_you = "Ctrl+Shift+T"
-clarification = "Ctrl+Shift+C"
-example_request = "Ctrl+Shift+E"
-optimization = "Ctrl+Shift+O"
-security_check = "Ctrl+Shift+S"
-documentation = "Ctrl+Shift+D"
+button_1 = "Alt+Shift+1"
+button_2 = "Alt+Shift+2"
+button_3 = "Alt+Shift+3"
+button_4 = "Alt+Shift+4"
+button_5 = "Alt+Shift+5"
+button_6 = "Alt+Shift+6"
+button_7 = "Alt+Shift+7"
+button_8 = "Alt+Shift+8"
+button_9 = "Alt+Shift+9"
 
-[settings]
-auto_start = false
-minimize_to_tray = true
-global_hotkeys = true 
+[snippets]
+button_1_title = "Ask Questions"
+button_1_text = "Ask the user questions in relation to supplementing the context you are given in the prompt. Ask the user questions until you are 95% sure you have the proper context in order to understand the problem and provide an accurate implementation/demo/mvp."
+button_1_description = "Prompts for clarifying questions"
+
+button_2_title = "Need Review"
+button_2_text = "If there is a situation where you encounter a problem you do not know how to fix/implement, please use the exit keywords \"I don't know === <description of problem you are unable to solve>\""
+button_2_description = "Escalation for unknown problems"
+
+button_3_title = "More Context"
+button_3_text = "Before providing a solution, ask me to clarify any ambiguous requirements or provide additional context that would help you give a more accurate and useful response."
+button_3_description = "Request for additional context"
+
+button_4_title = "Step by Step"
+button_4_text = "Break down your response into clear, actionable steps. Number each step and explain the reasoning behind important decisions."
+button_4_description = "Request structured response"
+
+button_5_title = "Examples"
+button_5_text = "Provide concrete examples in your response. Show don't just tell - include code snippets, sample data, or real-world scenarios that demonstrate your points."
+button_5_description = "Request examples and demos"
+
+button_6_title = "Validation"
+button_6_text = "Include validation steps or criteria I can use to verify that your solution works correctly and meets the requirements."
+button_6_description = "Request validation criteria"
+
+button_7_title = "Error Handling"
+button_7_text = "Address potential error cases and edge conditions. Include error handling strategies and common failure points to watch for."
+button_7_description = "Request error handling coverage"
+
+button_8_title = "Documentation"
+button_8_text = "Structure your response as if it were documentation - include clear headings, prerequisites, and any assumptions you're making."
+button_8_description = "Request documentation format"
+
+button_9_title = "Testing"
+button_9_text = "Include suggestions for how to test the solution you're providing. Mention both positive test cases and edge cases to verify."
+button_9_description = "Request testing guidance"
+
+[ui]
+always_on_top = true
+transparency = 0.9
+position_x = "top-right"
+auto_start = false 

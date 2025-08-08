@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use anyhow::{Result, Context};
@@ -8,9 +7,18 @@ use log::{info, error};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Snippet {
     pub id: String,
-    pub name: String,
+    pub title: String,
     pub text: String,
-    pub hotkey: Option<String>,
+    pub description: String,
+    pub hotkey: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UiSettings {
+    pub always_on_top: bool,
+    pub transparency: f64,
+    pub position_x: String,
+    pub auto_start: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,6 +32,7 @@ pub struct Settings {
 pub struct Config {
     pub snippets: Vec<Snippet>,
     pub settings: Settings,
+    pub ui_settings: UiSettings,
 }
 
 impl Default for Config {
@@ -35,13 +44,20 @@ impl Default for Config {
                 minimize_to_tray: true,
                 global_hotkeys: true,
             },
+            ui_settings: UiSettings {
+                always_on_top: true,
+                transparency: 0.9,
+                position_x: "top-right".to_string(),
+                auto_start: false,
+            },
         }
     }
 }
 
 pub fn get_config_path() -> Result<PathBuf> {
-    let app_dir = tauri::api::path::app_dir(&tauri::Config::default())
-        .context("Failed to get app directory")?;
+    let app_dir = dirs::config_dir()
+        .context("Failed to get config directory")?
+        .join("enhancekeys");
     fs::create_dir_all(&app_dir)?;
     Ok(app_dir.join("config.json"))
 }
@@ -51,7 +67,19 @@ pub fn init_config() -> Result<()> {
     
     if !config_path.exists() {
         info!("Creating default configuration");
-        let default_config = Config::default();
+        let mut default_config = Config::default();
+        
+        // Load default snippets from TOML file
+        match load_default_snippets() {
+            Ok(snippets) => {
+                default_config.snippets = snippets;
+                info!("Loaded {} default snippets", default_config.snippets.len());
+            },
+            Err(e) => {
+                error!("Failed to load default snippets: {}", e);
+            }
+        }
+        
         save_config_internal(&default_config)?;
     }
     
@@ -85,8 +113,7 @@ fn save_config_internal(config: &Config) -> Result<()> {
     Ok(())
 }
 
-#[tauri::command]
-pub async fn load_config() -> Result<Config, String> {
+pub fn load_config() -> Result<Config, String> {
     load_config_internal()
         .map_err(|e| {
             error!("Failed to load config: {}", e);
@@ -94,8 +121,7 @@ pub async fn load_config() -> Result<Config, String> {
         })
 }
 
-#[tauri::command]
-pub async fn save_config(config: Config) -> Result<(), String> {
+pub fn save_config(config: Config) -> Result<(), String> {
     save_config_internal(&config)
         .map_err(|e| {
             error!("Failed to save config: {}", e);
@@ -118,20 +144,32 @@ pub fn load_default_snippets() -> Result<Vec<Snippet>> {
     
     let mut snippets = Vec::new();
     
-    if let Some(snippets_table) = parsed.get("snippets").and_then(|v| v.as_table()) {
-        for (id, text) in snippets_table {
-            let hotkey = parsed
-                .get("hotkeys")
-                .and_then(|h| h.get(id))
-                .and_then(|h| h.as_str())
-                .map(|s| s.to_string());
+    // Load snippets based on button_1 through button_9 format
+    for i in 1..=9 {
+        let button_key = format!("button_{}", i);
+        
+        if let (Some(snippets_table), Some(hotkeys_table)) = (
+            parsed.get("snippets").and_then(|v| v.as_table()),
+            parsed.get("hotkeys").and_then(|v| v.as_table())
+        ) {
+            let title_key = format!("{}_title", button_key);
+            let text_key = format!("{}_text", button_key);
+            let desc_key = format!("{}_description", button_key);
             
-            snippets.push(Snippet {
-                id: id.clone(),
-                name: id.clone(),
-                text: text.as_str().unwrap_or("").to_string(),
-                hotkey,
-            });
+            if let (Some(title), Some(text), Some(description), Some(hotkey)) = (
+                snippets_table.get(&title_key).and_then(|v| v.as_str()),
+                snippets_table.get(&text_key).and_then(|v| v.as_str()),
+                snippets_table.get(&desc_key).and_then(|v| v.as_str()),
+                hotkeys_table.get(&button_key).and_then(|v| v.as_str()),
+            ) {
+                snippets.push(Snippet {
+                    id: button_key,
+                    title: title.to_string(),
+                    text: text.to_string(),
+                    description: description.to_string(),
+                    hotkey: hotkey.to_string(),
+                });
+            }
         }
     }
     

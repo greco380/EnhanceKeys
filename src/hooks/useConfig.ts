@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@tauri-apps/api/core'
 
 interface Snippet {
   id: string
