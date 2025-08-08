@@ -1,0 +1,31 @@
+# Default snippets for EnhanceKeys
+# This file contains the initial snippets that will be loaded when the app is first run
+
+[snippets]
+greeting = "Hello! How can I help you today?"
+code_review = "Please review this code and provide feedback on improvements, best practices, and potential issues."
+bug_report = "I'm experiencing an issue with the following behavior: [describe the problem]. Expected behavior: [describe what should happen]."
+feature_request = "I would like to request a new feature: [describe the feature]. This would help with: [explain the benefit]."
+thank_you = "Thank you for your help! I appreciate your assistance."
+clarification = "Could you please clarify what you mean by [specific term/concept]?"
+example_request = "Could you provide an example of how to implement [specific functionality]?"
+optimization = "How can I optimize this code for better performance?"
+security_check = "Please review this code for potential security vulnerabilities."
+documentation = "Could you help me write documentation for this code?"
+
+[hotkeys]
+greeting = "Ctrl+Shift+G"
+code_review = "Ctrl+Shift+R"
+bug_report = "Ctrl+Shift+B"
+feature_request = "Ctrl+Shift+F"
+thank_you = "Ctrl+Shift+T"
+clarification = "Ctrl+Shift+C"
+example_request = "Ctrl+Shift+E"
+optimization = "Ctrl+Shift+O"
+security_check = "Ctrl+Shift+S"
+documentation = "Ctrl+Shift+D"
+
+[settings]
+auto_start = false
+minimize_to_tray = true
+global_hotkeys = true 
